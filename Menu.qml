@@ -200,9 +200,19 @@ Item {
     root.appLibrary.refreshIcons()
     var entries = root.appLibrary.sortedEntries("")
     var next = []
+    var seen = ({})
     for (var i = 0; i < entries.length; i++) {
       var entry = entries[i].entry
       if (!entry || !entry.id) continue
+      var displayName = String(root.appLibrary.entryName(entry) || entry.name || entry.id)
+      var iconName = String(entry.icon || "")
+      // AppLibrary can expose the same desktop entry from both the user and
+      // system application directories. Keep distinct commands, but collapse
+      // identical name/icon/command entries into one launcher item.
+      var command = String(entry.exec || entry.command || entry.execString || "")
+      var key = [displayName, iconName, command].join("\u001f").toLowerCase()
+      if (seen[key]) continue
+      seen[key] = true
       next.push(entry)
     }
     root.allApps = next
