@@ -40,6 +40,7 @@ Item {
   readonly property var navigationIds: ["apps", "learn", "trigger", "style", "setup", "install", "remove", "update", "about", "system"]
   property bool globalSearchActive: false
   property var globalSearchRows: []
+  property int searchSelection: -1
   property bool escapeNeedsSecondPress: false
   readonly property string defaultMenuPath: root.omarchyPath + "/default/omarchy/omarchy-menu.jsonc"
   readonly property string userMenuPath: Quickshell.env("HOME") + "/.config/omarchy/extensions/omarchy-menu.jsonc"
@@ -52,8 +53,14 @@ Item {
   property int layoutIconSize: 52
   property int layoutFontSize: 14
   readonly property string layoutStateFile: Quickshell.env("HOME") + "/.local/state/iamcheyan-launcher/layout.json"
-  readonly property real layoutCellWidth: Math.max(130, root.layoutIconSize + 48)
-  readonly property real layoutCellHeight: Math.max(116, root.layoutIconSize + 64)
+  readonly property real layoutCellWidth: Math.max(
+    110,
+    root.layoutIconSize + Math.max(48, root.layoutFontSize * 3.5))
+  readonly property real layoutRowGap: Math.max(16, root.layoutFontSize * 1.5)
+  readonly property real layoutCellHeight: Math.max(
+    104,
+    root.layoutIconSize + Math.max(52, root.layoutFontSize * 3.5))
+    + root.layoutRowGap
   readonly property real automaticCardWidth: Math.min(panel.width * 0.80, 1260)
   readonly property real automaticCardHeight: Math.min(panel.height * 0.82, 762)
   readonly property real configuredCardWidth: Math.min(panel.width - 40,
@@ -266,6 +273,7 @@ Item {
       root.filterGlobalSearch(query)
       return
     }
+    root.searchSelection = -1
     if (root.activeSection === "apps") {
       root.filterApps()
       return
@@ -320,6 +328,46 @@ Item {
       return al < bl ? -1 : (al > bl ? 1 : String(a.secondary).localeCompare(String(b.secondary)))
     })
     root.globalSearchRows = rows
+    root.searchSelection = rows.length > 0 ? 0 : -1
+    root.updateSearchCategory()
+  }
+
+  function moveSearchSelection(delta) {
+    if (!root.globalSearchActive || root.globalSearchRows.length === 0) return
+    var current = root.searchSelection < 0 ? 0 : root.searchSelection
+    var next = Math.max(0, Math.min(
+      root.globalSearchRows.length - 1, current + delta))
+    root.searchSelection = next
+    root.updateSearchCategory()
+    Qt.callLater(function() {
+      if (searchGrid) searchGrid.positionViewAtIndex(next, GridView.Contain)
+    })
+  }
+
+  function activateSelectedSearchRow() {
+    if (!root.globalSearchActive || root.searchSelection < 0) return false
+    var row = root.globalSearchRows[root.searchSelection]
+    if (!row) return false
+    root.activateGlobalSearchRow(row)
+    return true
+  }
+
+  function searchCategoryId(row) {
+    if (!row || row.kind === "app") return "apps"
+    var id = String(row.id || "")
+    var dot = id.indexOf(".")
+    return dot >= 0 ? id.slice(0, dot) : id
+  }
+
+  function updateSearchCategory() {
+    if (!root.globalSearchActive || root.searchSelection < 0) return
+    var row = root.globalSearchRows[root.searchSelection]
+    var categoryId = root.searchCategoryId(row)
+    if (!categoryId) return
+    root.activeSection = categoryId
+    root.activeSectionLabel = categoryId === "apps"
+      ? "Applications"
+      : String(root.navigationItemForId(categoryId).label || categoryId)
   }
 
   function activateGlobalSearchRow(row) {
@@ -556,7 +604,33 @@ Item {
                   }
                 }
                 Keys.onReturnPressed: {
-                  if (root.filteredApps.length > 0) root.launch(root.filteredApps[0])
+                  if (!root.activateSelectedSearchRow()
+                      && root.filteredApps.length > 0)
+                    root.launch(root.filteredApps[0])
+                }
+                Keys.onPressed: function(event) {
+                  if (!root.globalSearchActive) return
+                  if (event.key === Qt.Key_Left) {
+                    root.moveSearchSelection(-1)
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Right) {
+                    root.moveSearchSelection(1)
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Up) {
+                    root.moveSearchSelection(-searchGrid.columnCount)
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Down) {
+                    root.moveSearchSelection(searchGrid.columnCount)
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Backtab
+                      || (event.key === Qt.Key_Tab
+                          && (event.modifiers & Qt.ShiftModifier))) {
+                    root.moveSearchSelection(-1)
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Tab) {
+                    root.moveSearchSelection(1)
+                    event.accepted = true
+                  }
                 }
 
                 Text {
@@ -619,6 +693,7 @@ Item {
             delegate: Item {
               id: searchItem
               required property string modelData
+              required property int index
               readonly property var row: root.globalSearchRowForId(modelData)
               width: searchGrid.cellWidth
               height: searchGrid.cellHeight
@@ -629,7 +704,8 @@ Item {
                 width: Math.min(parent.width, parent.height) - 6
                 height: width
                 radius: width / 2
-                color: searchMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
+                color: searchMouse.containsMouse || index === root.searchSelection
+                  ? Color.menu.selectedBackground : "transparent"
               }
 
               Item {
@@ -677,7 +753,7 @@ Item {
                   visible: !searchItem.isApp
                   text: row ? (row.icon || "□") : "□"
                   color: Color.menu.text
-                  font.family: "monospace"
+                  font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize + 20
                   horizontalAlignment: Text.AlignHCenter
                   verticalAlignment: Text.AlignVCenter
@@ -697,7 +773,7 @@ Item {
                 font.family: "monospace"
                 font.pixelSize: root.layoutFontSize
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignTop
+                verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
               }
 
@@ -714,7 +790,7 @@ Item {
                 font.family: "monospace"
                 font.pixelSize: Math.max(10, root.layoutFontSize - 3)
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignTop
+                verticalAlignment: Text.AlignVCenter
                 maximumLineCount: 2
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
@@ -795,13 +871,14 @@ Item {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             property int columnCount: root.layoutColumns > 0
-              ? root.layoutColumns : Math.max(1, Math.floor(width / 130))
+              ? root.layoutColumns
+              : Math.max(1, Math.floor(width / root.layoutCellWidth))
             width: root.layoutColumns > 0
               ? Math.min(parent.width - 16, root.layoutColumns * root.layoutCellWidth)
               : parent.width - 16
             cellWidth: width / columnCount
             cellHeight: root.layoutRows > 0
-              ? root.layoutCellHeight : 116
+              ? root.layoutCellHeight : root.layoutCellHeight
             height: parent.height
             snapMode: GridView.SnapToRow
             model: root.filteredAppIds
@@ -885,14 +962,18 @@ Item {
                 width: 22
                 height: 22
                 radius: 11
-                color: appItem.isPinned ? Color.accent : Color.menu.selectedBackground
-                opacity: mouse.containsMouse ? 1 : 0
+                color: mouse.containsMouse
+                  ? (appItem.isPinned ? Color.accent : Color.menu.selectedBackground)
+                  : "transparent"
+                opacity: appItem.isPinned || mouse.containsMouse ? 1 : 0
                 z: 3
 
                 Text {
                   anchors.centerIn: parent
                   text: "󰐃"
-                  color: appItem.isPinned ? Color.menu.background : Color.muted
+                  color: mouse.containsMouse
+                    ? (appItem.isPinned ? Color.menu.background : Color.muted)
+                    : (appItem.isPinned ? Color.menu.text : Color.muted)
                   font.family: "monospace"
                   font.pixelSize: root.layoutFontSize
                 }
@@ -914,7 +995,7 @@ Item {
                 anchors.right: parent.right
                 anchors.leftMargin: 5
                 anchors.rightMargin: 5
-                height: 36
+                height: Math.max(36, root.layoutFontSize * 2.4)
                 text: root.appLibrary
                   ? root.appLibrary.entryName(app)
                   : String(app ? (app.name || app.id) : "?")
@@ -924,10 +1005,9 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignTop
                 maximumLineCount: 2
-                // Let the label wrap naturally first. ElideRight together
-                // with WordWrap makes some desktop names stay on one line.
+                // Keep long names readable in up to two centered lines.
                 wrapMode: Text.Wrap
-                elide: Text.ElideRight
+                elide: Text.ElideNone
               }
 
               // The running marker is aligned to the fixed bottom edge of
@@ -939,7 +1019,7 @@ Item {
                 width: 8
                 height: 8
                 radius: 4
-                color: Color.accent
+                color: "#f5c542"
                 border.color: Color.menu.background
                 border.width: 1
                 opacity: appItem.isRunning ? 1 : 0
@@ -1059,29 +1139,45 @@ Item {
                 height: 56
                 text: row ? (row.icon || "□") : "□"
                 color: Color.menu.text
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize + 20
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
               }
 
-              Text {
+              Row {
+                id: sectionLabelRow
+                anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 77
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 5
-                anchors.rightMargin: 5
                 height: 36
-                text: row ? (row.label + (row.hasChildren ? "  ›" : "")) : ""
-                color: Color.menu.text
-                font.family: "monospace"
-                font.pixelSize: root.layoutFontSize
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignTop
-                maximumLineCount: 2
-                wrapMode: Text.Wrap
-                elide: Text.ElideNone
+                spacing: 6
+
+                Text {
+                  width: Math.min(140, implicitWidth)
+                  height: sectionLabelRow.height
+                  text: row ? row.label : ""
+                  color: Color.menu.text
+                  font.family: "monospace"
+                  font.pixelSize: root.layoutFontSize
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                  maximumLineCount: 2
+                  wrapMode: Text.Wrap
+                  elide: Text.ElideNone
+                }
+
+                Text {
+                  visible: row && row.hasChildren
+                  width: visible ? 12 : 0
+                  height: sectionLabelRow.height
+                  text: "›"
+                  color: Color.menu.text
+                  font.family: "monospace"
+                  font.pixelSize: root.layoutFontSize
+                  horizontalAlignment: Text.AlignHCenter
+                  verticalAlignment: Text.AlignVCenter
+                }
               }
 
               MouseArea {
@@ -1150,8 +1246,8 @@ Item {
                 Text {
                   width: 100
                   text: item.icon || "□"
-                  color: Color.menu.text
-                  font.family: "monospace"
+                  color: Color.muted
+                  font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize + 8
                   horizontalAlignment: Text.AlignHCenter
                 }

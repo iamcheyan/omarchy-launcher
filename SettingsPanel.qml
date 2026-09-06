@@ -172,7 +172,7 @@ Item {
           accent: Color.accent
           fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
           fontSize: root.fontSize
-          onModified: root.commit("columns", value)
+          onModified: function(value) { root.commit("columns", value) }
         }
       }
 
@@ -197,7 +197,7 @@ Item {
           accent: Color.accent
           fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
           fontSize: root.fontSize
-          onModified: root.commit("rows", value)
+          onModified: function(value) { root.commit("rows", value) }
         }
       }
 
@@ -223,7 +223,7 @@ Item {
           accent: Color.accent
           fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
           fontSize: root.fontSize
-          onModified: root.commit("iconSize", value)
+          onModified: function(value) { root.commit("iconSize", value) }
         }
       }
 
@@ -248,7 +248,7 @@ Item {
           accent: Color.accent
           fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
           fontSize: root.fontSize
-          onModified: root.commit("fontSize", value)
+          onModified: function(value) { root.commit("fontSize", value) }
         }
       }
 
