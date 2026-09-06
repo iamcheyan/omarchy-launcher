@@ -1086,9 +1086,9 @@ Item {
                 font.pixelSize: root.layoutFontSize
                   font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                verticalAlignment: Text.AlignTop
                 maximumLineCount: 2
-                // Keep long names readable in up to two centered lines.
+                // Keep long names readable in up to two top-aligned lines.
                 wrapMode: Text.Wrap
                 elide: Text.ElideNone
               }
