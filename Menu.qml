@@ -57,15 +57,16 @@ Item {
   property int layoutFontSize: 14
   readonly property string layoutStateFile: Quickshell.env("HOME") + "/.local/state/iamcheyan-launcher/layout.json"
   readonly property real layoutCellWidth: Math.max(
-    110,
-    root.layoutIconSize + Math.max(48, root.layoutFontSize * 3.5))
+    140,
+    root.layoutIconSize + Math.max(48, root.layoutFontSize * 3.5) + 32)
   readonly property real layoutRowGap: Math.max(16, root.layoutFontSize * 1.5)
   readonly property real layoutCellHeight: Math.max(
-    104,
-    root.layoutIconSize + Math.max(52, root.layoutFontSize * 3.5))
-    + root.layoutRowGap
+    128,
+    root.layoutIconSize + Math.max(52, root.layoutFontSize * 3.5) + 24)
   readonly property real automaticCardWidth: Math.min(panel.width * 0.80, 1260)
-  readonly property real automaticCardHeight: Math.min(panel.height * 0.82, 762)
+  readonly property int automaticGridRows: 4
+  readonly property real automaticCardHeight: Math.min(panel.height - 40,
+    72 + root.automaticGridRows * 128 + 98)
   readonly property real configuredCardWidth: Math.min(panel.width - 40,
     Math.max(400, root.layoutColumns * root.layoutCellWidth + 40))
   readonly property real configuredCardHeight: Math.min(panel.height - 40,
@@ -665,8 +666,13 @@ Item {
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
                 onTextChanged: {
+                  var wasGlobalSearch = root.globalSearchActive
                   if (text.length > 0) root.escapeNeedsSecondPress = false
                   root.filterCurrentSection()
+                  // Clearing a global search must return to the application
+                  // page instead of leaving an empty menu category selected.
+                  if (!text.trim() && wasGlobalSearch)
+                    root.selectSection("apps", false)
                 }
                 Keys.onEscapePressed: {
                   if (!root.escapeNeedsSecondPress
@@ -751,13 +757,16 @@ Item {
 
           GridView {
             id: searchGrid
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.rightMargin: 16
+            anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            property int columnCount: Math.max(1, Math.floor(width / 140))
+            property int columnCount: root.layoutColumns > 0
+              ? root.layoutColumns
+              : Math.max(1, Math.floor(width / root.layoutCellWidth))
+            width: root.layoutColumns > 0
+              ? Math.min(parent.width - 16, root.layoutColumns * root.layoutCellWidth)
+              : parent.width - 16
             cellWidth: width / columnCount
-            cellHeight: 128
+            cellHeight: root.layoutRows > 0 ? root.layoutCellHeight : 128
             height: Math.floor(parent.height / cellHeight) * cellHeight
             snapMode: GridView.SnapToRow
             model: root.globalSearchRowIds
@@ -788,8 +797,8 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 12
-                width: 52
-                height: 52
+                width: Math.min(root.layoutIconSize, Math.max(1, parent.width - 10))
+                height: width
 
                 Image {
                   id: searchAppIcon
@@ -844,7 +853,7 @@ Item {
                 anchors.right: parent.right
                 anchors.leftMargin: 5
                 anchors.rightMargin: 5
-                height: 20
+                height: Math.max(36, root.layoutFontSize * 2.4)
                 text: row ? row.label : ""
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
@@ -948,8 +957,8 @@ Item {
 
           GridView {
             id: grid
-            anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
             property int columnCount: root.layoutColumns > 0
               ? root.layoutColumns
               : Math.max(1, Math.floor(width / root.layoutCellWidth))
@@ -957,9 +966,8 @@ Item {
               ? Math.min(parent.width - 16, root.layoutColumns * root.layoutCellWidth)
               : parent.width - 16
             cellWidth: width / columnCount
-            cellHeight: root.layoutRows > 0
-              ? root.layoutCellHeight : root.layoutCellHeight
-            height: parent.height
+            cellHeight: root.layoutRows > 0 ? root.layoutCellHeight : 128
+            height: Math.floor(parent.height / cellHeight) * cellHeight
             snapMode: GridView.SnapToRow
             model: root.filteredAppIds
             clip: true
@@ -989,7 +997,6 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 12
-                // Do not let a large icon spill into a neighboring column.
                 width: Math.min(root.layoutIconSize, Math.max(1, parent.width - 10))
                 height: width
 
@@ -1077,7 +1084,7 @@ Item {
                 anchors.right: parent.right
                 anchors.leftMargin: 5
                 anchors.rightMargin: 5
-                height: Math.max(36, root.layoutFontSize * 2.4)
+                height: 20
                 text: root.appLibrary
                   ? root.appLibrary.entryName(app)
                   : String(app ? (app.name || app.id) : "?")
@@ -1086,17 +1093,35 @@ Item {
                 font.pixelSize: root.layoutFontSize
                   font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignTop
-                maximumLineCount: 2
-                // Keep long names readable in up to two top-aligned lines.
-                wrapMode: Text.Wrap
-                elide: Text.ElideNone
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+              }
+
+              Text {
+                id: appDescription
+                anchors.top: appLabel.bottom
+                anchors.topMargin: 2
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: 5
+                anchors.rightMargin: 5
+                height: 18
+                text: root.appLibrary
+                  ? root.appLibrary.entrySubtext(app)
+                  : ""
+                color: Color.muted
+                font.family: Style.font.menuFamily
+                font.pixelSize: Math.max(10, root.layoutFontSize - 3)
+                  font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
               }
 
               // The running marker is aligned to the fixed bottom edge of
               // the label area, so one-line and two-line names look identical.
               Rectangle {
-                anchors.top: appLabel.bottom
+                anchors.top: appDescription.bottom
                 anchors.topMargin: 4
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 8
@@ -1121,9 +1146,15 @@ Item {
 
               PanelToolTip {
                 visible: mouse.containsMouse
-                text: root.appLibrary
-                  ? root.appLibrary.entryName(app)
-                  : String(app ? (app.name || app.id) : "?")
+                text: {
+                  var name = root.appLibrary
+                    ? root.appLibrary.entryName(app)
+                    : String(app ? (app.name || app.id) : "?")
+                  var description = root.appLibrary
+                    ? root.appLibrary.entrySubtext(app)
+                    : ""
+                  return description ? name + " · " + description : name
+                }
                 panelForeground: "#eeeeee"
                 fontFamily: Style.font.menuFamily
               }

@@ -19,9 +19,8 @@ Item {
   property int fontSize: 14
 
   readonly property int automaticColumns: Math.max(1, Math.floor(
-    (Math.min(Screen.width * 0.80, 1260) - 40) / 130))
-  readonly property int automaticRows: Math.max(1, Math.floor(
-    (Math.min(Screen.height * 0.82, 762) - 170) / 116))
+    (Math.min(Screen.width * 0.80, 1260) - 40) / 140))
+  readonly property int automaticRows: 4
   readonly property int displayedColumns: root.columns > 0 ? root.columns : root.automaticColumns
   readonly property int displayedRows: root.rows > 0 ? root.rows : root.automaticRows
 
@@ -253,12 +252,14 @@ Item {
       }
 
       Button {
-        text: "Reset columns and rows to automatic"
+        text: "Reset layout to defaults"
         fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
         fontSize: root.fontSize
         onClicked: {
           root.columns = 0
           root.rows = 0
+          root.iconSize = 52
+          root.fontSize = 14
           root.persist()
         }
       }
