@@ -118,6 +118,14 @@ Item {
     return root.activeSection === id || root.activeSection.indexOf(id + ".") === 0
   }
 
+  function scrollThumbY(view, trackHeight, thumbHeight) {
+    var contentRange = Math.max(0, view.contentHeight - view.height)
+    var trackRange = Math.max(0, trackHeight - thumbHeight)
+    if (contentRange <= 0 || trackRange <= 0) return 0
+    return Math.max(0, Math.min(trackRange,
+      (view.contentY / contentRange) * trackRange))
+  }
+
   function selectSection(id, focusSearch) {
     var items = MenuModel.merge(root.nativeDefaults, root.nativeOverrides)
     if (id === "apps" || !items[id]) {
@@ -893,7 +901,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            width: 6
+            width: 8
             radius: 4
             color: Color.menu.selectedBackground
             visible: searchGrid.contentHeight > searchGrid.height
@@ -902,14 +910,15 @@ Item {
               id: searchScrollThumb
               x: 1
               width: parent.width - 2
-              height: Math.max(28, parent.height * searchGrid.visibleArea.heightRatio)
-              y: (parent.height - height) * searchGrid.visibleArea.yPosition
+              height: Math.max(32, parent.height * searchGrid.visibleArea.heightRatio)
+              y: root.scrollThumbY(searchGrid, parent.height, height)
               radius: 3
               color: Color.muted
 
               MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.SizeVerCursor
+                preventStealing: true
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                 property real pressOffset: 0
 
                 onPressed: function(mouse) { pressOffset = mouse.y }
@@ -1127,7 +1136,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.right: parent.right
-            width: 6
+            width: 8
             radius: 4
             color: Color.menu.selectedBackground
             visible: grid.contentHeight > grid.height
@@ -1136,15 +1145,16 @@ Item {
               id: scrollThumb
               x: 1
               width: parent.width - 2
-              height: Math.max(28, parent.height * grid.visibleArea.heightRatio)
-              y: (parent.height - height) * grid.visibleArea.yPosition
+              height: Math.max(32, parent.height * grid.visibleArea.heightRatio)
+              y: root.scrollThumbY(grid, parent.height, height)
               radius: 3
               color: Color.muted
 
               MouseArea {
                 id: scrollThumbMouse
                 anchors.fill: parent
-                cursorShape: Qt.SizeVerCursor
+                preventStealing: true
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                 property real pressOffset: 0
 
                 onPressed: function(mouse) {
