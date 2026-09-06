@@ -59,7 +59,7 @@ _Right-click the top-bar launcher to configure columns, rows, icon size, and int
 - **Rows** — number of visible rows.
 - **Icon size** — application icon size.
 - **Interface font size** — shared launcher text size.
-- **Reset layout to defaults** — restore automatic columns, four rows, 52px icons, and 14px interface text.
+- **Reset layout to defaults** — restore 8 columns, four rows, 48px icons, and 14px interface text.
 
 Card width is calculated from columns, icon size, and text size. Cells also account for label space and a vertical gap between rows, so larger icons or text expand the layout instead of being forced into a fixed card.
 
@@ -192,7 +192,7 @@ _右键点击顶栏启动器后，可以设置列数、行数、图标尺寸和�
 - **Rows** — 纵向显示的行数。
 - **Icon size** — 应用图标尺寸。
 - **Interface font size** — 启动器统一字号。
-- **Reset layout to defaults** — 恢复自动列数、4 行、52px 图标和 14px 界面字号。
+- **Reset layout to defaults** — 恢复 8 列、4 行、48px 图标和 14px 界面字号。
 
 卡片宽度根据列数、图标尺寸和字号计算，同时考虑标题空间和应用行之间的垂直间距。增大图标或字号时，布局会一起扩展。
 
@@ -325,7 +325,7 @@ _トップバーのランチャーを右クリックすると、列数、行数�
 - **Rows** — 縦方向の行数。
 - **Icon size** — アイコンサイズ。
 - **Interface font size** — ランチャー全体の文字サイズ。
-- **Reset layout to defaults** — 列数を自動計算、4 行、52px アイコン、14px の UI 文字サイズに戻す。
+- **Reset layout to defaults** — 8 列、4 行、48px アイコン、14px の UI 文字サイズに戻す。
 
 カード幅は列数、アイコンサイズ、文字サイズから計算され、タイトル領域と行間も考慮します。アイコンや文字を大きくしても、内容が固定サイズに押し込まれません。
 

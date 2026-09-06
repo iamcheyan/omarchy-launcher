@@ -51,9 +51,9 @@ Item {
   property var runningSet: ({})
   property bool pinnedIdsLoaded: false
   readonly property string stateFile: Quickshell.env("HOME") + "/.local/state/iamcheyan-launcher/pinned-apps"
-  property int layoutColumns: 0
-  property int layoutRows: 0
-  property int layoutIconSize: 52
+  property int layoutColumns: 8
+  property int layoutRows: 4
+  property int layoutIconSize: 48
   property int layoutFontSize: 14
   readonly property string layoutStateFile: Quickshell.env("HOME") + "/.local/state/iamcheyan-launcher/layout.json"
   readonly property real layoutCellWidth: Math.max(
@@ -82,6 +82,7 @@ Item {
     runningAppsLoader.active = true
     if (runningAppsLoader.item) runningAppsLoader.item.refresh()
     root.refreshApps()
+    appRefreshTimer.restart()
     Qt.callLater(function() { searchField.forceActiveFocus() })
   }
 
@@ -510,6 +511,19 @@ Item {
     function onAppsChanged() { root.refreshApps() }
   }
 
+  Timer {
+    id: appRefreshTimer
+    interval: 500
+    repeat: true
+    property int attempts: 0
+    onTriggered: {
+      root.refreshApps()
+      attempts += 1
+      if (root.allApps.length > 1 || attempts >= 10) stop()
+    }
+    onRunningChanged: if (running) attempts = 0
+  }
+
   FileView {
     id: defaultMenuFile
     path: root.defaultMenuPath
@@ -535,9 +549,9 @@ Item {
         root.layoutIconSize = boundedLayoutValue(saved.iconSize, 52, 24, 96)
         root.layoutFontSize = boundedLayoutValue(saved.fontSize, 14, 10, 24)
       } catch (error) {
-        root.layoutColumns = 0
-        root.layoutRows = 0
-        root.layoutIconSize = 52
+        root.layoutColumns = 8
+        root.layoutRows = 4
+        root.layoutIconSize = 48
         root.layoutFontSize = 14
       }
     }

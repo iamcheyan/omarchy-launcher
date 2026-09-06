@@ -13,9 +13,9 @@ Item {
   property Item anchorItem: null
   property var settings: ({})
   property bool opened: false
-  property int columns: 0
-  property int rows: 0
-  property int iconSize: 52
+  property int columns: 8
+  property int rows: 4
+  property int iconSize: 48
   property int fontSize: 14
 
   readonly property int automaticColumns: Math.max(1, Math.floor(
@@ -34,9 +34,9 @@ Item {
   }
 
   function readSettings() {
-    root.columns = bounded(root.setting("columns", root.columns), 0, 0, 20)
-    root.rows = bounded(root.setting("rows", root.rows), 0, 0, 10)
-    root.iconSize = bounded(root.setting("iconSize", root.iconSize), 52, 24, 96)
+    root.columns = bounded(root.setting("columns", root.columns), 8, 0, 20)
+    root.rows = bounded(root.setting("rows", root.rows), 4, 0, 10)
+    root.iconSize = bounded(root.setting("iconSize", root.iconSize), 48, 24, 96)
     root.fontSize = bounded(root.setting("fontSize", root.fontSize), 14, 10, 24)
   }
 
@@ -108,14 +108,14 @@ Item {
       if (root.settings && root.settings.columns !== undefined) return
       try {
         var saved = JSON.parse(text())
-        root.columns = root.bounded(saved.columns, 0, 0, 20)
-        root.rows = root.bounded(saved.rows, 0, 0, 10)
-        root.iconSize = root.bounded(saved.iconSize, 52, 24, 96)
+        root.columns = root.bounded(saved.columns, 8, 0, 20)
+        root.rows = root.bounded(saved.rows, 4, 0, 10)
+        root.iconSize = root.bounded(saved.iconSize, 48, 24, 96)
         root.fontSize = root.bounded(saved.fontSize, 14, 10, 24)
       } catch (error) {
-        root.columns = 0
-        root.rows = 0
-        root.iconSize = 52
+        root.columns = 8
+        root.rows = 4
+        root.iconSize = 48
         root.fontSize = 14
       }
     }
@@ -256,9 +256,9 @@ Item {
         fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
         fontSize: root.fontSize
         onClicked: {
-          root.columns = 0
-          root.rows = 0
-          root.iconSize = 52
+          root.columns = 8
+          root.rows = 4
+          root.iconSize = 48
           root.fontSize = 14
           root.persist()
         }
