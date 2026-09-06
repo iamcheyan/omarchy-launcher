@@ -726,7 +726,7 @@ Item {
                 font.pixelSize: root.layoutFontSize + 4
                   font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                verticalAlignment: Text.AlignTop
 
                 MouseArea {
                   anchors.fill: parent
