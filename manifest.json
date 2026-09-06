@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "iamcheyan",
   "license": "MIT",
-  "description": "A single-level launcher surface using Omarchy's native menu content and application launch behavior.",
+  "description": "Native Omarchy application launcher with searchable apps, menu actions, keyboard navigation, pinning, and adaptive layout controls.",
   "keepLoaded": true,
   "omarchy": {
     "clonedFrom": "omarchy.menu"
