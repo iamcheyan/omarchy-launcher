@@ -330,6 +330,11 @@ Item {
     }
 
     rows.sort(function(a, b) {
+      // Keep application matches at the front so the most common search
+      // target is always the first result group.
+      var ak = a.kind === "app" ? 0 : 1
+      var bk = b.kind === "app" ? 0 : 1
+      if (ak !== bk) return ak - bk
       var al = String(a.label).toLowerCase()
       var bl = String(b.label).toLowerCase()
       return al < bl ? -1 : (al > bl ? 1 : String(a.secondary).localeCompare(String(b.secondary)))
