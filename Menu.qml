@@ -34,12 +34,14 @@ Item {
   // the recorded SIGSEGV occurs during a shell/output reload.
   readonly property var filteredAppIds: root.filteredApps.map(function(app) { return String(app.id) })
   readonly property var sectionRowIds: root.sectionRows.map(function(row) { return String(row.id) })
-  readonly property var globalSearchRowIds: root.globalSearchRows.map(function(row, index) {
+  readonly property var globalSearchRowIds: root.searchRows().map(function(row, index) {
     return String(row.kind || "row") + ":" + String(row.kind === "app" ? row.entry.id : row.id) + ":" + String(index)
   })
   readonly property var navigationIds: ["apps", "learn", "trigger", "style", "setup", "install", "remove", "update", "about", "system"]
   property bool globalSearchActive: false
   property var globalSearchRows: []
+  property var searchNavigationIds: ["all"]
+  property string searchCategoryFilter: "all"
   property int searchSelection: -1
   property bool rebuildingSection: false
   property bool escapeNeedsSecondPress: false
@@ -112,6 +114,7 @@ Item {
   }
 
   function navigationActive(id) {
+    if (root.globalSearchActive) return id === root.searchCategoryFilter
     return root.activeSection === id || root.activeSection.indexOf(id + ".") === 0
   }
 
@@ -224,8 +227,9 @@ Item {
 
   function globalSearchRowForId(id) {
     var wanted = String(id || "")
-    for (var i = 0; i < root.globalSearchRows.length; i++) {
-      var row = root.globalSearchRows[i]
+    var rows = root.searchRows()
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i]
       var key = String(row.kind || "row") + ":" + String(row.kind === "app" ? row.entry.id : row.id) + ":" + String(i)
       if (key === wanted) return row
     }
@@ -233,6 +237,7 @@ Item {
   }
 
   function navigationItemForId(id) {
+    if (id === "all") return { id: "all", label: "All", icon: "" }
     var items = MenuModel.merge(root.nativeDefaults, root.nativeOverrides)
     var item = items[String(id || "")] || ({})
     return {
@@ -274,6 +279,8 @@ Item {
       root.filterGlobalSearch(query)
       return
     }
+    root.searchCategoryFilter = "all"
+    root.searchNavigationIds = ["all"]
     root.searchSelection = -1
     if (root.activeSection === "apps") {
       root.filterApps()
@@ -340,15 +347,50 @@ Item {
       return al < bl ? -1 : (al > bl ? 1 : String(a.secondary).localeCompare(String(b.secondary)))
     })
     root.globalSearchRows = rows
+    root.searchCategoryFilter = "all"
+    var categoryIds = ["all"]
+    var seenCategories = ({ all: true })
+    for (var k = 0; k < rows.length; k++) {
+      var categoryId = root.searchCategoryId(rows[k])
+      if (categoryId && !seenCategories[categoryId]) {
+        seenCategories[categoryId] = true
+        categoryIds.push(categoryId)
+      }
+    }
+    root.searchNavigationIds = categoryIds
     root.searchSelection = rows.length > 0 ? 0 : -1
     root.updateSearchCategory()
   }
 
+  function searchRows() {
+    if (root.searchCategoryFilter === "all") return root.globalSearchRows
+    return root.globalSearchRows.filter(function(row) {
+      return root.searchCategoryId(row) === root.searchCategoryFilter
+    })
+  }
+
+  function selectSearchCategory(id) {
+    root.searchCategoryFilter = id || "all"
+    var rows = root.searchRows()
+    root.searchSelection = rows.length > 0 ? 0 : -1
+    if (root.searchCategoryFilter !== "all") {
+      root.activeSection = root.searchCategoryFilter
+      root.activeSectionLabel = root.searchCategoryFilter === "apps"
+        ? "Applications"
+        : String(root.navigationItemForId(root.searchCategoryFilter).label
+          || root.searchCategoryFilter)
+    }
+    Qt.callLater(function() {
+      if (searchGrid && rows.length > 0) searchGrid.positionViewAtIndex(0, GridView.Beginning)
+    })
+  }
+
   function moveSearchSelection(delta) {
-    if (!root.globalSearchActive || root.globalSearchRows.length === 0) return
+    var rows = root.searchRows()
+    if (!root.globalSearchActive || rows.length === 0) return
     var current = root.searchSelection < 0 ? 0 : root.searchSelection
     var next = Math.max(0, Math.min(
-      root.globalSearchRows.length - 1, current + delta))
+      rows.length - 1, current + delta))
     root.searchSelection = next
     root.updateSearchCategory()
     Qt.callLater(function() {
@@ -358,7 +400,7 @@ Item {
 
   function activateSelectedSearchRow() {
     if (!root.globalSearchActive || root.searchSelection < 0) return false
-    var row = root.globalSearchRows[root.searchSelection]
+    var row = root.searchRows()[root.searchSelection]
     if (!row) return false
     root.activateGlobalSearchRow(row)
     return true
@@ -373,7 +415,7 @@ Item {
 
   function updateSearchCategory() {
     if (!root.globalSearchActive || root.searchSelection < 0) return
-    var row = root.globalSearchRows[root.searchSelection]
+    var row = root.searchRows()[root.searchSelection]
     var categoryId = root.searchCategoryId(row)
     if (!categoryId) return
     root.activeSection = categoryId
@@ -1248,7 +1290,7 @@ Item {
             orientation: ListView.Horizontal
             spacing: 0
             clip: true
-            model: root.navigationIds
+            model: root.globalSearchActive ? root.searchNavigationIds : root.navigationIds
             interactive: false
 
             delegate: Item {
@@ -1293,7 +1335,10 @@ Item {
               MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: root.selectSection(item.id, item.id === "apps")
+                onClicked: {
+                  if (root.globalSearchActive) root.selectSearchCategory(item.id)
+                  else root.selectSection(item.id, item.id === "apps")
+                }
               }
             }
           }
