@@ -41,6 +41,7 @@ Item {
   property bool globalSearchActive: false
   property var globalSearchRows: []
   property int searchSelection: -1
+  property bool rebuildingSection: false
   property bool escapeNeedsSecondPress: false
   readonly property string defaultMenuPath: root.omarchyPath + "/default/omarchy/omarchy-menu.jsonc"
   readonly property string userMenuPath: Quickshell.env("HOME") + "/.config/omarchy/extensions/omarchy-menu.jsonc"
@@ -279,7 +280,13 @@ Item {
       return
     }
     if (!query) {
-      root.sectionRows = root.allSectionRows
+      if (!root.rebuildingSection) {
+        root.rebuildingSection = true
+        root.selectSection(root.activeSection, false)
+        root.rebuildingSection = false
+      } else {
+        root.sectionRows = root.allSectionRows
+      }
       return
     }
     root.sectionRows = root.allSectionRows.filter(function(row) {
@@ -575,8 +582,9 @@ Item {
               Text {
                 text: "/"
                 color: Color.muted
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
               }
 
               TextInput {
@@ -586,8 +594,9 @@ Item {
                 color: Color.menu.text
                 selectionColor: "#6c8cff"
                 selectedTextColor: "#101010"
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
                 onTextChanged: {
@@ -648,8 +657,9 @@ Item {
                 text: "×"
                 visible: searchField.text.length > 0
                 color: Color.menu.text
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize + 4
+                  font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
 
@@ -743,8 +753,9 @@ Item {
                     anchors.centerIn: parent
                     text: row && row.label.length > 0 ? row.label.charAt(0).toUpperCase() : "?"
                     color: Color.menu.text
-                    font.family: "monospace"
+                    font.family: Style.font.menuFamily
                     font.pixelSize: root.layoutFontSize + 11
+                  font.weight: Font.DemiBold
                   }
                 }
 
@@ -755,6 +766,7 @@ Item {
                   color: Color.menu.text
                   font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize + 20
+                  font.weight: Font.DemiBold
                   horizontalAlignment: Text.AlignHCenter
                   verticalAlignment: Text.AlignVCenter
                 }
@@ -770,8 +782,9 @@ Item {
                 height: 20
                 text: row ? row.label : ""
                 color: Color.menu.text
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
@@ -787,8 +800,9 @@ Item {
                 height: 36
                 text: row ? row.secondary : ""
                 color: Color.muted
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: Math.max(10, root.layoutFontSize - 3)
+                  font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 maximumLineCount: 2
@@ -812,7 +826,7 @@ Item {
                   ? row.label
                   : row ? row.label + " · " + row.secondary : ""
                 panelForeground: "#eeeeee"
-                fontFamily: "monospace"
+                fontFamily: Style.font.menuFamily
               }
             }
           }
@@ -947,8 +961,9 @@ Item {
                       return name.length > 0 ? name.charAt(0).toUpperCase() : "?"
                     }
                     color: Color.menu.text
-                    font.family: "monospace"
+                    font.family: Style.font.menuFamily
                     font.pixelSize: root.layoutFontSize + 11
+                  font.weight: Font.DemiBold
                   }
                 }
               }
@@ -974,8 +989,9 @@ Item {
                   color: mouse.containsMouse
                     ? (appItem.isPinned ? Color.menu.background : Color.muted)
                     : (appItem.isPinned ? Color.menu.text : Color.muted)
-                  font.family: "monospace"
+                  font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                 }
 
                 MouseArea {
@@ -1000,8 +1016,9 @@ Item {
                   ? root.appLibrary.entryName(app)
                   : String(app ? (app.name || app.id) : "?")
                 color: Color.menu.text
-                font.family: "monospace"
+                font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignTop
                 maximumLineCount: 2
@@ -1042,7 +1059,7 @@ Item {
                   ? root.appLibrary.entryName(app)
                   : String(app ? (app.name || app.id) : "?")
                 panelForeground: "#eeeeee"
-                fontFamily: "monospace"
+                fontFamily: Style.font.menuFamily
               }
 
             }
@@ -1141,6 +1158,7 @@ Item {
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
                 font.pixelSize: root.layoutFontSize + 20
+                  font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
               }
@@ -1158,8 +1176,9 @@ Item {
                   height: sectionLabelRow.height
                   text: row ? row.label : ""
                   color: Color.menu.text
-                  font.family: "monospace"
+                  font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                   horizontalAlignment: Text.AlignHCenter
                   verticalAlignment: Text.AlignVCenter
                   maximumLineCount: 2
@@ -1173,8 +1192,9 @@ Item {
                   height: sectionLabelRow.height
                   text: "›"
                   color: Color.menu.text
-                  font.family: "monospace"
+                  font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize
+                  font.weight: Font.DemiBold
                   horizontalAlignment: Text.AlignHCenter
                   verticalAlignment: Text.AlignVCenter
                 }
@@ -1194,7 +1214,7 @@ Item {
                 visible: sectionMouse.containsMouse
                 text: row ? row.label : ""
                 panelForeground: "#eeeeee"
-                fontFamily: "monospace"
+                fontFamily: Style.font.menuFamily
               }
             }
           }
@@ -1249,6 +1269,7 @@ Item {
                   color: Color.muted
                   font.family: Style.font.menuFamily
                   font.pixelSize: root.layoutFontSize + 8
+                  font.weight: Font.DemiBold
                   horizontalAlignment: Text.AlignHCenter
                 }
 
@@ -1256,8 +1277,9 @@ Item {
                   width: 100
                   text: item.label
                   color: Color.muted
-                  font.family: "monospace"
+                  font.family: Style.font.menuFamily
                   font.pixelSize: Math.max(10, root.layoutFontSize - 2)
+                  font.weight: Font.DemiBold
                   horizontalAlignment: Text.AlignHCenter
                   elide: Text.ElideRight
                 }
@@ -1266,7 +1288,6 @@ Item {
               MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                onEntered: root.selectSection(item.id, false)
                 onClicked: root.selectSection(item.id, item.id === "apps")
               }
             }
