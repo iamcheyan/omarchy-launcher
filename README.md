@@ -51,6 +51,10 @@ The bottom navigation switches between Applications, Learn, Trigger, Style, Setu
 
 Right-click the **Applications** widget to open the native settings panel:
 
+![Application Launcher layout settings](launcher-settings.png)
+
+_Right-click the top-bar launcher to configure columns, rows, icon size, and interface font size._
+
 - **Columns** — number of application columns.
 - **Rows** — number of visible rows.
 - **Icon size** — application icon size.
@@ -180,6 +184,10 @@ omarchy-shell shell summon iamcheyan.launcher '{"menu":"root"}'
 
 在顶栏 **Applications** 上点击右键打开设置：
 
+![Application Launcher 布局设置](launcher-settings.png)
+
+_右键点击顶栏启动器后，可以设置列数、行数、图标尺寸和界面字号。_
+
 - **Columns** — 横向显示的应用数量。
 - **Rows** — 纵向显示的行数。
 - **Icon size** — 应用图标尺寸。
@@ -308,6 +316,10 @@ omarchy-shell shell summon iamcheyan.launcher '{"menu":"root"}'
 ## レイアウト設定
 
 トップバーの **Applications** を右クリックして設定を開きます。
+
+![Application Launcher レイアウト設定](launcher-settings.png)
+
+_トップバーのランチャーを右クリックすると、列数、行数、アイコンサイズ、文字サイズを設定できます。_
 
 - **Columns** — 横方向のアプリ数。
 - **Rows** — 縦方向の行数。
