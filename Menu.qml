@@ -21,7 +21,12 @@ Item {
   property bool opened: false
   property var allApps: []
   property var filteredApps: []
-  property var appLibrary: root.shell ? root.shell.appLibrary : null
+  // Local compatibility shim — see AppLibraryFallback.qml. The host grants the
+  // app-library facade from the Instantiator-delivered manifest, so a
+  // third-party menu plugin is handed `shell.appLibrary === null` and its app
+  // grid renders empty. Prefer the host facade whenever it exists.
+  property var appLibrary: (root.shell && root.shell.appLibrary) ? root.shell.appLibrary : fallbackLibrary
+  AppLibraryFallback { id: fallbackLibrary }
   property var nativeDefaults: ({})
   property var nativeOverrides: ({})
   property string activeSection: "apps"
